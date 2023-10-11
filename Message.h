@@ -1,5 +1,5 @@
 #include<string>
-
+//add message  proto
 class Message
 {
 private:
