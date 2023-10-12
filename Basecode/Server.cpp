@@ -11,6 +11,7 @@
 #include<fcntl.h>
 #include<cstring>
 #include<map>
+#include"Message.h"
 
 #define MAX_EVENT 1024
 #define MAX_USERS 5
@@ -94,6 +95,7 @@ int main(int argc , char* argv[])
     add_sig(SIGTERM);
     add_sig(SIGINT);
 
+    Message msg;
     std::map<int , user_ds> users;
     int user_count = 0;
     bool stop_server = false;
@@ -156,7 +158,9 @@ int main(int argc , char* argv[])
                 char buf[1024];
                 memset(buf , '\0' , sizeof(buf));
                 ret = recv(events[i].data.fd , buf , sizeof(buf) , 0);
-                std::cout << "get " << ret <<" bytes, from " << events[i].data.fd << " say : " <<"\n"; 
+                msg.read_content(buf , sizeof(buf));
+                printf("%d say : %s\n",msg.get_id() , msg.str_c());
+                // std::cout << "get " << ret <<" bytes, from " << events[i].data.fd << " say : " <<"\n"; 
                 printf("%s\n" , buf);
                 if(ret < 0)
                 {
