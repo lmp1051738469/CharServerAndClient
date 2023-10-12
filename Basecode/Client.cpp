@@ -37,7 +37,8 @@ int main(int argc , char* argv[])
 
     const char* ip = argv[1];
     int port = atoi(argv[2]);
-    int ID = atoi(argv[2]);
+    int ID = atoi(argv[3]);
+    printf("ID : %d\n" , ID);
     int ret = 0;
     sockaddr_in address;
     bzero(&address , sizeof(address));
@@ -62,11 +63,11 @@ int main(int argc , char* argv[])
     addfd(epollfd , sockfd);
     addfd(epollfd , STDIN_FILENO);
 
-    Message msg;
+    
     bool stop_server = false;
 
-    printf("id\tcontent\n");
-    printf("%d \t: ",ID);
+    // printf("id\tcontent\n");
+    // printf("%d \t: ",ID);
     while (!stop_server)
     {
         int number = epoll_wait(epollfd , events , 20 , -1);
@@ -81,6 +82,7 @@ int main(int argc , char* argv[])
             else if(events[i].data.fd == sockfd && events[i].events & EPOLLIN)
             {
                 //有消息到
+                
                 char buf[1024];
                 memset(buf , '\0' , sizeof(buf));
                 
@@ -91,18 +93,37 @@ int main(int argc , char* argv[])
                     stop_server = true;
                     break;
                 }
-                msg.read_content(buf , sizeof(buf));
-                printf("%d say : %s\n",msg.get_id() , msg.str_c());
                 // std::cout << "content is : " <<buf <<"\n";
+                std::stringstream ss(buf);
+                Message msg;
+                msg.read_content(ss);
+                printf("%d say : %s\n",msg.get_id() , msg.str_c());
+                
             }
             else if(events[i].data.fd == STDIN_FILENO && events[i].events & EPOLLIN)
             {
                 //有消息发
                 // std::cout << "case STDIN\n";
 
-                ret = splice(STDIN_FILENO , NULL , pipefd[1] , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
-                ret = splice(pipefd[0] , NULL , sockfd , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
-                printf("%d \t: ",ID);
+                char buf[1024];
+                memset(buf , '\0' , sizeof(buf));
+                ret = read( STDIN_FILENO , buf , sizeof(buf));
+                // printf("ret = %d buf : %s",ret ,buf);
+
+                Message msg(ID , (std::string)buf);
+
+                // printf("%d say : %s",msg.get_id(),msg.str_c());
+
+                std::stringstream ss;
+                msg.send_content(ss);
+                std::string temp = ss.str();
+                auto send_ = temp.c_str();
+                // printf("send_ : %s , size %ld",send_,strlen(send_));
+                ret = send(sockfd , send_ , strlen(send_) , 0);
+
+                // ret = splice(STDIN_FILENO , NULL , pipefd[1] , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
+                // ret = splice(pipefd[0] , NULL , sockfd , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
+                // printf("%d \t: ",ID);
             }
         }
 

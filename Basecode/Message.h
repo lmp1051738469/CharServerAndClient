@@ -4,8 +4,6 @@
 #include<string>
 #include<sstream>
 
-static std::stringstream ss;
-
 class Message
 {
 private:
@@ -18,8 +16,8 @@ friend class boost::serialization::access;
     ar & p.id; 
     ar & p.content; 
   }
-    void save_msg();
-    void load_msg();
+    void save_msg(std::stringstream &);
+    void load_msg(std::stringstream &);
 public:
     Message() = default;
     Message(int id_ , std::string msg_) : id(id_) , content(msg_){}
@@ -28,10 +26,12 @@ public:
     int get_id()const {return id;}
 
     //构建字节流， 把字符流转成char * , 
-    char * send_content( char * buf , size_t size);
+    void send_content( std::stringstream &sa);
 
     //把char* 转换成字符流 ， 构建对象
-    void read_content(char* buf , size_t size);
+    void read_content(std::stringstream &sa );
 };
+
+
 
 

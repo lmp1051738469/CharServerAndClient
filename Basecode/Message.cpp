@@ -1,30 +1,25 @@
 #include"Message.h"
 #include<cstdio>
 
-void Message::save_msg()
+void Message::save_msg(std::stringstream &sa)
 {
-    //发送时，把对象转为流对象，然后转为char*
-    boost::archive::text_oarchive oa(ss); 
+    //发送时，把对象转为流对象，然后转为const char*
+    boost::archive::text_oarchive oa(sa); 
     oa << *this; 
 }
 
-void Message::load_msg()
+void Message::load_msg( std::stringstream &sa)
 {
-    boost::archive::text_iarchive ia(ss);  
+    boost::archive::text_iarchive ia(sa);  
     ia >> *this; 
 }
 
-char * Message::send_content( char * buf , size_t size)
+void Message::send_content( std::stringstream &sa )
 {
-    save_msg();
-    ss.getline(buf , size);
-    return buf;
+    save_msg( sa );
 }
 
-void Message::read_content(char* buf , size_t size)
-{
-    ss.clear();
-    auto len = strlen(buf);
-    ss.write(buf , len);
-    load_msg();
+void Message::read_content(std::stringstream &sa)
+{  
+    load_msg(sa);
 }
