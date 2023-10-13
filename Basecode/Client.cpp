@@ -11,6 +11,7 @@
 #include<fcntl.h>
 #include<cstring>
 #include"Message.h"
+#include"EPOLLMINE.h"
 
 int setnonblocking(int fd){
     int old_option = fcntl( fd , F_GETFL);
@@ -56,81 +57,14 @@ int main(int argc , char* argv[])
 
     ret = pipe(pipefd);
     assert(ret != -1);
-    
-    epoll_event events[20];
-    int epollfd = epoll_create( 5 );
-
-    addfd(epollfd , sockfd);
-    addfd(epollfd , STDIN_FILENO);
-
-    
-    bool stop_server = false;
+    EPOLL_MINE EPOLL(5 , 20 , sockfd , ID);
+    EPOLL.run_client();
 
     // printf("id\tcontent\n");
     // printf("%d \t: ",ID);
-    while (!stop_server)
-    {
-        int number = epoll_wait(epollfd , events , 20 , -1);
-        if(number < 0){std::cout << "epoll failure\n";break;}
-        for(int i = 0 ; i < number ; i++)
-        {
-            if(events[i].data.fd == sockfd && events[i].events & EPOLLRDHUP)
-            {
-                std::cout<< "server close the connection\n";
-                break;
-            }
-            else if(events[i].data.fd == sockfd && events[i].events & EPOLLIN)
-            {
-                //有消息到
-                
-                char buf[1024];
-                memset(buf , '\0' , sizeof(buf));
-                
-                ret = recv( sockfd , buf , sizeof(buf) , 0);
-                if(ret == 0)
-                {
-                    std::cout << "server close\n";
-                    stop_server = true;
-                    break;
-                }
-                // std::cout << "content is : " <<buf <<"\n";
-                std::stringstream ss(buf);
-                Message msg;
-                msg.read_content(ss);
-                printf("%d say : %s\n",msg.get_id() , msg.str_c());
-                
-            }
-            else if(events[i].data.fd == STDIN_FILENO && events[i].events & EPOLLIN)
-            {
-                //有消息发
-                // std::cout << "case STDIN\n";
 
-                char buf[1024];
-                memset(buf , '\0' , sizeof(buf));
-                ret = read( STDIN_FILENO , buf , sizeof(buf));
-                // printf("ret = %d buf : %s",ret ,buf);
 
-                Message msg(ID , (std::string)buf);
-
-                // printf("%d say : %s",msg.get_id(),msg.str_c());
-
-                std::stringstream ss;
-                msg.send_content(ss);
-                std::string temp = ss.str();
-                auto send_ = temp.c_str();
-                // printf("send_ : %s , size %ld",send_,strlen(send_));
-                ret = send(sockfd , send_ , strlen(send_) , 0);
-
-                // ret = splice(STDIN_FILENO , NULL , pipefd[1] , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
-                // ret = splice(pipefd[0] , NULL , sockfd , NULL , 3072 , SPLICE_F_MORE | SPLICE_F_MOVE);
-                // printf("%d \t: ",ID);
-            }
-        }
-
-    }
-    
-
-close(sockfd);
-return 1;
+    close(sockfd);
+    return 1;
 
 }

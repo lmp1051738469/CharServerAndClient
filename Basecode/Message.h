@@ -4,6 +4,9 @@
 #include<string>
 #include<sstream>
 
+#ifndef _MESSAGE_H_
+#define _MESSAGE_H_
+
 class Message
 {
 private:
@@ -32,6 +35,6 @@ public:
     void read_content(std::stringstream &sa );
 };
 
-
+#endif
 
 
